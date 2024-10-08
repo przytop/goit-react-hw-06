@@ -1,9 +1,13 @@
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { useDispatch, useSelector } from "react-redux";
 import { useId } from "react";
+import { getContacts } from "../redux/selectors";
+import { addContact } from "../redux/contactsSlice";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import css from "./ContactForm.module.css";
 
-export default function ContactForm({ onAdd }) {
+export default function ContactForm() {
+  const dispatch = useDispatch();
   const nameFieldId = useId();
   const numberFieldId = useId();
 
@@ -12,13 +16,27 @@ export default function ContactForm({ onAdd }) {
     number: "",
   };
 
+  const contacts = useSelector(getContacts);
+
   const handleSubmit = (values, actions) => {
-    const newContact = {
-      id: `id-${Date.now()}`,
-      ...values,
-    };
-    onAdd(newContact);
-    actions.resetForm();
+    const { name, number } = values;
+
+    const duplicateName = contacts.some(
+      (contact) => contact.name.toLowerCase() === name.toLowerCase()
+    );
+
+    const duplicateNumber = contacts.some(
+      (contact) => contact.number === number
+    );
+
+    if (duplicateName) {
+      alert(`The name ${name} is already in your contacts.`);
+    } else if (duplicateNumber) {
+      alert(`The number ${number} is already in your contacts.`);
+    } else {
+      dispatch(addContact({ name, number }));
+      actions.resetForm();
+    }
   };
 
   const validationSchema = Yup.object().shape({
